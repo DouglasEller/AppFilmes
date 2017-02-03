@@ -5,12 +5,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import douglas.com.appfilmes.Utils.Functions;
+import douglas.com.appfilmes.Utils.DialogMSG;
 import douglas.com.appfilmes.model.Filme;
 
 
@@ -20,12 +19,10 @@ import douglas.com.appfilmes.model.Filme;
 
 public class FilmeDB extends SQLiteOpenHelper {
 
-
     private static final String DATABASE = "BancoFilmes";
     private static final int VERSAO = 1;
     private static final String TABELA = "tbl_filmes";
-    private static final String TAG = "AppFilmes";
-
+    private DialogMSG dialogMSG;
 
     public FilmeDB(Context context) {
         super(context, DATABASE, null, VERSAO);
@@ -34,7 +31,8 @@ public class FilmeDB extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         String sql = "CREATE TABLE " + TABELA + " ("
-                + "id TEXT PRIMARY KEY, "
+                + "id INTEGER PRIMARY KEY, "
+                + "imdbID TEXT,  "
                 + "titulo TEXT, "
                 + "ano TEXT, "
                 + "duracao TEXT, "
@@ -58,20 +56,10 @@ public class FilmeDB extends SQLiteOpenHelper {
         onCreate(sqLiteDatabase);
     }
 
-    public void insere(Filme filme, List<Filme> filmes) {
-
-        boolean filmeExiste = false;
-
-        for (Filme filmeAux : filmes)
-            if (filme.getId().equals(filmeAux.getId()))
-                filmeExiste = true;
-
-        if (filmeExiste) {
-            Log.i(TAG, " O filme ja existe no banco");
-        } else {
+    public void insere(Filme filme) {
 
             ContentValues cv = new ContentValues();
-            cv.put("id", filme.getId());
+            cv.put("imdbID", filme.getImdbID());
             cv.put("titulo", filme.getTitulo());
             cv.put("ano", filme.getAno());
             cv.put("duracao", filme.getDuracao());
@@ -81,21 +69,24 @@ public class FilmeDB extends SQLiteOpenHelper {
             cv.put("tipo", filme.getTipo());
             cv.put("genero", filme.getGenero());
             cv.put("diretor", filme.getDiretor());
-            cv.put("poster", Functions.encodeToBase64(filme.getPoster()));
+            cv.put("poster", filme.getPoster());
             getWritableDatabase().insert(TABELA, null, cv);
-        }
+    }
+
+    public void delete(String id){
+        getWritableDatabase().delete(TABELA,"imdbID=?",new String[] {id});
     }
 
     public List<Filme> getLista() {
 
         List<Filme> filmes = new ArrayList<Filme>();
 
-        String sql = "SELECT * FROM " + TABELA + ";";
+        String sql = "SELECT * FROM " + TABELA + " ORDER BY id DESC;";
         Cursor c = getReadableDatabase().rawQuery(sql, null);
 
         while (c.moveToNext()) {
             Filme filme = new Filme();
-            filme.setId(c.getString(c.getColumnIndex("id")));
+            filme.setImdbID(c.getString(c.getColumnIndex("imdbID")));
             filme.setTitulo(c.getString(c.getColumnIndex("titulo")));
             filme.setAno(c.getString(c.getColumnIndex("ano")));
             filme.setDuracao(c.getString(c.getColumnIndex("duracao")));

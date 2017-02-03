@@ -1,15 +1,19 @@
 package douglas.com.appfilmes.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.gson.annotations.SerializedName;
+
 
 /**
  * Created by douglasEller on 25/01/17.
  */
 
-public class Filme {
+public class Filme implements Parcelable {
 
     @SerializedName("imdbID")
-    private String id;
+    private String imdbID;
     @SerializedName("Title")
     private String titulo;
     @SerializedName("Year")
@@ -35,12 +39,62 @@ public class Filme {
     @SerializedName("Error")
     private String error;
 
-    public String getId() {
-        return id;
+    public Filme() {}
+
+    public Filme(Parcel source){
+        imdbID = source.readString();
+        titulo = source.readString();
+        ano = source.readString();
+        duracao = source.readString();
+        elenco = source.readString();
+        sinopse = source.readString();
+        pais = source.readString();
+        tipo = source.readString();
+        genero = source.readString();
+        diretor = source.readString();
+        poster = source.readString();
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public static final Parcelable.Creator<Filme>
+            CREATOR = new Parcelable.Creator<Filme>() {
+
+        public Filme createFromParcel(Parcel in) {
+            return new Filme(in);
+        }
+
+        @Override
+        public Filme[] newArray(int size) {
+            return new Filme[size];
+        }
+    };
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeString(imdbID);
+        parcel.writeString(titulo);
+        parcel.writeString(ano);
+        parcel.writeString(duracao);
+        parcel.writeString(elenco);
+        parcel.writeString(sinopse);
+        parcel.writeString(pais);
+        parcel.writeString(tipo);
+        parcel.writeString(genero);
+        parcel.writeString(diretor);
+        parcel.writeString(poster);
+
+    }
+
+    public String getImdbID() {
+        return imdbID;
+    }
+
+    public void setImdbID(String imdbID) {
+        this.imdbID = imdbID;
     }
 
     public String getTitulo() {

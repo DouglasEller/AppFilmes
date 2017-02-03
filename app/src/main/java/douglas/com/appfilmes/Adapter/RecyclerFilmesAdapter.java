@@ -1,16 +1,19 @@
 package douglas.com.appfilmes.Adapter;
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.List;
 
+import douglas.com.appfilmes.DataBase.FilmeDB;
+import douglas.com.appfilmes.FullDescription;
 import douglas.com.appfilmes.R;
 import douglas.com.appfilmes.Utils.Functions;
 import douglas.com.appfilmes.model.Filme;
@@ -19,10 +22,11 @@ import douglas.com.appfilmes.model.Filme;
  * Created by douglasEller on 25/01/17.
  */
 
-public class RecyclerFilmesAdapter extends RecyclerView.Adapter<RecyclerFilmesAdapter.ItemHolder> {
+public class RecyclerFilmesAdapter extends RecyclerView.Adapter<RecyclerFilmesAdapter.ItemHolder>
+        implements ItemTouchHelperAdapter {
 
     private List<Filme> listaFilmes;
-    private Context mContext;
+    private static Context mContext;
 
     public RecyclerFilmesAdapter(Context context, List<Filme> itemsList) {
         this.listaFilmes = itemsList;
@@ -33,10 +37,7 @@ public class RecyclerFilmesAdapter extends RecyclerView.Adapter<RecyclerFilmesAd
     public ItemHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
         View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.list_item, null);
         ItemHolder mh = new ItemHolder(v);
-
-        //Filme filme = itemsList.get(i);
-
-        //mh.titulo.setText(filme.getTitulo());
+        v.setTag(mh);
         return mh;
     }
 
@@ -52,26 +53,36 @@ public class RecyclerFilmesAdapter extends RecyclerView.Adapter<RecyclerFilmesAd
         holder.genero.setText(filme.getGenero());
         holder.pais.setText(filme.getPais());
         holder.poster.setImageBitmap(Functions.decodeToBase64(filme.getPoster()));
-
-       /* Glide.with(mContext)
-                .load(feedItem.getImageURL())
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .centerCrop()
-                .error(R.drawable.bg)
-                .into(feedListRowHolder.thumbView);*/
+        holder.position = i;
+        holder.setFilmesHolder(listaFilmes);
     }
 
     @Override
     public int getItemCount() {
-        return (null != listaFilmes? listaFilmes.size() : 0);
+        return (null != listaFilmes ? listaFilmes.size() : 0);
     }
 
-    public class ItemHolder extends RecyclerView.ViewHolder {
+    @Override
+    public void onItemDismiss(final int position) {
 
-        protected TextView titulo,descricao,duracao,ano,genero,pais;
+        FilmeDB filmeDB = new FilmeDB(mContext);
+        filmeDB.delete(listaFilmes.get(position).getImdbID());
+        filmeDB.close();
 
+        listaFilmes.remove(position);
+        notifyDataSetChanged();
+    }
+
+    @Override
+    public void onItemMove(int fromPosition, int toPosition) {
+    }
+
+    public static class ItemHolder extends RecyclerView.ViewHolder {
+
+        protected TextView titulo, descricao, duracao, ano, genero, pais;
         protected ImageView poster;
-
+        protected int position;
+        protected static List<Filme> filmesHolder;
 
         public ItemHolder(View view) {
             super(view);
@@ -87,14 +98,24 @@ public class RecyclerFilmesAdapter extends RecyclerView.Adapter<RecyclerFilmesAd
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
-                    Toast.makeText(v.getContext(), titulo.getText(), Toast.LENGTH_SHORT).show();
-
+                    ItemHolder holderAux = (ItemHolder) v.getTag();
+                    Bundle mBundle = new Bundle();
+                    mBundle.putInt("filmeEscolhido", holderAux.position);
+                    Intent i = new Intent();
+                    i.putExtras(mBundle);
+                    i.setClass(mContext, FullDescription.class);
+                    mContext.startActivity(i);
                 }
             });
-
-
         }
 
+        public static List<Filme> getFilmesHolder() {
+            return filmesHolder;
+        }
+
+        public void setFilmesHolder(List<Filme> filmesHolder) {
+            this.filmesHolder = filmesHolder;
+        }
     }
+
 }

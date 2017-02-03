@@ -26,7 +26,6 @@ public class FilmeRequest {
     private String result, msgProgressDialog;
 
     private ServicesURLs servicesURLs = new ServicesURLs();
-    private String TAG = "AppFilmes";
     private JSONObject jsonObject = new JSONObject();
 
     public String Request(final Context context, String msg, final String nomeFilme) {
@@ -62,7 +61,7 @@ public class FilmeRequest {
 
                 Response response = client.newCall(request).execute();
                 result = response.body().string();
-                Log.i(TAG, result);
+                Log.i("AppFilmes", result);
                 DialogDismiss();
 
                 return result;

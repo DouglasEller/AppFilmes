@@ -28,16 +28,13 @@ public class Functions {
 
     private static String TAG = "AppFilmes";
 
-    //Verifica Conexão com a internet
     public static boolean temConexao(Context ctx) {
 
         ConnectivityManager cm = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         return netInfo != null && netInfo.isConnectedOrConnecting();
-
     }
 
-    //Progress Dialog sem menssagem
     public static ProgressDialog createProgressDialog(Context mContext, String msg) {
 
         try {
@@ -49,7 +46,6 @@ public class Functions {
 
     }
 
-    //Progress Dialog sem menssagem
     public static ProgressDialog defaultProgressDialog(Context mContext) {
         try {
             final ProgressDialog dialog = ProgressDialog.show(mContext, "", "", false, true);
@@ -61,6 +57,11 @@ public class Functions {
 
         }
         return null;
+    }
+
+    public static Bitmap decodeToBase64(String input) {
+        byte[] decodedByte = Base64.decode(input, 0);
+        return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length);
     }
 
     public static String encodeToBase64(String url) {
@@ -85,11 +86,5 @@ public class Functions {
             return "";
         }
     }
-
-    public static Bitmap decodeToBase64(String input) {
-        byte[] decodedByte = Base64.decode(input, 0);
-        return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length);
-    }
-
 
 }

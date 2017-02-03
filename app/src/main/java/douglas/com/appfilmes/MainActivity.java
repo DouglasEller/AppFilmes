@@ -8,34 +8,34 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.Gravity;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import douglas.com.appfilmes.Adapter.ItemTouchHelperAdapter;
+import douglas.com.appfilmes.Adapter.ItemTouchHelperCallback;
 import douglas.com.appfilmes.Adapter.RecyclerFilmesAdapter;
 import douglas.com.appfilmes.DataBase.FilmeDB;
 import douglas.com.appfilmes.Utils.DialogMSG;
+import douglas.com.appfilmes.Utils.Functions;
 import douglas.com.appfilmes.model.Filme;
 import douglas.com.appfilmes.services.FilmeRequest;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "AppFilmes";
     private List<Filme> filmes = new ArrayList<>();
-    private FilmeDB filmeDB ;
+    private FilmeDB filmeDB;
 
     private RecyclerView mRecycler;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
-    private Toast toast;
+
     private DialogMSG dialogMSG = new DialogMSG();
 
     @Override
@@ -45,81 +45,73 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        toast = Toast.makeText(this,"",Toast.LENGTH_LONG);
-        toast.setGravity(Gravity.CENTER, 0, 0);
-
         mRecycler = (RecyclerView) findViewById(R.id.recyclerFilmes);
 
         mRecycler.setHasFixedSize(true);
-
         mLayoutManager = new LinearLayoutManager(this);
         mRecycler.setLayoutManager(mLayoutManager);
 
         filmeDB = new FilmeDB(this);
         filmes = filmeDB.getLista();
 
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        CarregarCards();
-    }
-
-    private void CarregarCards() {
-        filmeDB = new FilmeDB(this);
-        filmes = filmeDB.getLista();
-        filmeDB.close();
-
-        mAdapter = new RecyclerFilmesAdapter(this, filmes);
-        mRecycler.setAdapter(null);
+        mAdapter = new RecyclerFilmesAdapter(MainActivity.this, filmes);
         mRecycler.setAdapter(mAdapter);
+
+        ItemTouchHelper.Callback callback =
+                new ItemTouchHelperCallback((ItemTouchHelperAdapter) mAdapter);
+        ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
+        touchHelper.attachToRecyclerView(mRecycler);
     }
 
     public void CarregarFilmePesquisado(String nomeFilme) {
         FilmeRequest requestFilme = new FilmeRequest();
-        String resultJSON = requestFilme.Request(this,"Buscando...",nomeFilme);
+        String resultJSON = requestFilme.Request(this, "Buscando...", nomeFilme);
 
         Gson gson = new Gson();
         Filme filme = gson.fromJson(resultJSON, Filme.class);
 
-        if(filme.isResposta()){
+        if (filme.isResposta()) {
+            boolean filmeRepetido = false;
+            for (Filme filmeAux : filmes)
+                if (filme.getImdbID().equalsIgnoreCase(filmeAux.getImdbID()))
+                    filmeRepetido = true;
 
-            FilmeDB filmeDB = new FilmeDB(this);
+            if (filmeRepetido) {
+                Intent i = new Intent();
+                dialogMSG.msgDialog = "Este filme já foi adicionado à lista.";
+                i.setClass(this, DialogMSG.class);
+                startActivity(i);
+            } else {
+                filme.setPoster(Functions.encodeToBase64(filme.getPoster()));
+                filmeDB.insere(filme);
+                filmeDB.close();
 
-            filmeDB.insere(filme, filmes);
-            filmeDB.close();
-
-            CarregarCards();
-        }else{
+                filmes.add(0, filme);
+                mAdapter.notifyDataSetChanged();
+            }
+        } else {
 
             Intent i = new Intent();
             dialogMSG.msgDialog = filme.getError();
             i.setClass(this, DialogMSG.class);
             startActivity(i);
-
         }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
-        //Carrega o xml do menu.
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main, menu);
 
-        //Pega o Componente.
         MenuItem searchItem = menu.findItem(R.id.search);
 
-        //Define um texto de ajuda:
         final SearchView mSearchView = (SearchView) MenuItemCompat.getActionView(searchItem);
 
-        mSearchView.setOnQueryTextListener( new SearchView.OnQueryTextListener(){
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 
             @Override
             public boolean onQueryTextSubmit(String query) {
-                Log.i(TAG,"Texto digitado on submit = " + query);
                 CarregarFilmePesquisado(query);
                 mSearchView.clearFocus();
                 return false;
